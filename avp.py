@@ -4,6 +4,6 @@
 import config as c
 
 
-print bitrate
+print c.bitrate
 
 
