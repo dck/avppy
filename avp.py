@@ -23,4 +23,19 @@ startoffset = 10 #in seconds
 
 # watermarking options
 logotext = "http://asd.com"
+offsetx  = -10 # '-' means from left 
+offsety  = -10 # '-' means from low
+
+# thumbnail options
+delay = 2*60 # in seconds
+
+
+# custom options
+folders = {}
+
+folders.thumbnail = "thumbnails"
+folders.old       = "old"
+folders.result    = "converted"
+
+
 
