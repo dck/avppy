@@ -1,3 +1,4 @@
 avconv -i %inputfile% -b %bitrate% output.avi      # change bitrate and convert
 avconv -i test1.mp4 -c:v libx264 -c:a copy output.avi  # codecs
 avconv -i test1.mp4 -s 100x100 output.avi  # resolution
+avconv -i test1.mp4 -ss 00:00:10 output.avi  # cut first 10 seconds
