@@ -1,0 +1,2 @@
+avconv -i %inputfile% -b %bitrate% output.avi      # change bitrate and convert
+avconv -i test1.mp4 -b 128 -c:v libx264 -c:a copy output.avi  # codecs
