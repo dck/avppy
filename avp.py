@@ -44,6 +44,6 @@ if __name__ == '__main__':
             char = cv.WaitKey(33)
             if (char != -1):
                 if (ord(char) == 27):
-                    loop = False
-        
+                    loop = False  
     cv.DestroyAllWindows()
+
