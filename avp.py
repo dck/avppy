@@ -15,10 +15,7 @@ IMAGE_DEVIATION_TRESHOLD = 2.0
 def get_frame_set(file_name, dt, max_frame_count = 10):
     i = 0
     frames = []
-
     source = highgui.cvCreateFileCapture(file_name)
-    frame = highgui.cvQueryFrame(source)
-
     while(True):
         if len(frames) >= max_frame_count:
             break
@@ -36,7 +33,7 @@ def get_picture_std(img):
 
 if __name__ == '__main__':
     frames = get_frame_set(filename, 40, 10)
-    
+
     highgui.cvNamedWindow("frame", highgui.CV_WINDOW_AUTOSIZE)
     loop = True
     while(loop):
@@ -45,6 +42,5 @@ if __name__ == '__main__':
             char = highgui.cvWaitKey(33)
             if (char != -1):
                 if (ord(char) == 27):
-                    loop = False
-        
+                    loop = False    
     highgui.cvDestroyAllWindows()
