@@ -31,7 +31,7 @@ def get_frame_set(file_name, dt, max_frame_count = 10):
     return frames
 
 def get_picture_std(img):
-    return np.array(img).std(axis=1).std()
+    return np.array(img[:,:]).std(axis=1).std()
 
 if __name__ == '__main__':
     frames = get_frame_set(filename, 40, 10)
