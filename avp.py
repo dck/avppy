@@ -11,27 +11,21 @@ import numpy as np
 filename = "./tests/1.mp4"
 
 def get_frame_set(file_name, dt, max_frame_count = 10):
+    i = 0
+    frames = []
+
     source = highgui.cvCreateFileCapture(file_name)
     frame = highgui.cvQueryFrame(source)
-    
-    i = 0
-    
-    frames = []
 
     while(True):
         if len(frames) >= max_frame_count:
             break
-
         frame = highgui.cvQueryFrame(source)
-        
         if (frame == None):
             break
-
         if i % dt == 0:
             frames.append(cv.cvCloneImage(frame))
-            
         i+=1
-
     return frames
 
 def get_picture_std(img):
@@ -48,7 +42,6 @@ if __name__ == '__main__':
 
     while(loop):
         for frame in frames:
-            
             highgui.cvShowImage("frame", frame)
             char = highgui.cvWaitKey(33)
             if (char != -1):
