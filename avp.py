@@ -10,6 +10,8 @@ import numpy as np
 
 filename = "./tests/1.mp4"
 
+IMAGE_DEVIATION_TRESHOLD = 2.0
+
 def get_frame_set(file_name, dt, max_frame_count = 10):
     i = 0
     frames = []
@@ -24,7 +26,8 @@ def get_frame_set(file_name, dt, max_frame_count = 10):
         if (frame == None):
             break
         if i % dt == 0:
-            frames.append(cv.cvCloneImage(frame))
+            if get_picture_std(frame) > IMAGE_DEVIATION_TRESHOLD:
+                frames.append(cv.cvCloneImage(frame))
         i+=1
     return frames
 
@@ -32,14 +35,10 @@ def get_picture_std(img):
     return np.array(img).std(axis=1).std()
 
 if __name__ == '__main__':
+    frames = get_frame_set(filename, 40, 10)
+    
     highgui.cvNamedWindow("frame", highgui.CV_WINDOW_AUTOSIZE)
-
     loop = True
-
-    frames = get_frame_set(filename, 5, 10)
-    for i in range(len(frames)):
-        print "frame:", i, "std:", get_picture_std(frames[i])
-
     while(loop):
         for frame in frames:
             highgui.cvShowImage("frame", frame)
