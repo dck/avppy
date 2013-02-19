@@ -3,8 +3,7 @@
 
 import config as c
 
-import opencv.cv as cv
-import opencv.highgui as highgui
+import cv
 
 import numpy as np
 
@@ -16,18 +15,18 @@ def get_frame_set(file_name, dt, max_frame_count = 10):
     i = 0
     frames = []
 
-    source = highgui.cvCreateFileCapture(file_name)
-    frame = highgui.cvQueryFrame(source)
+    source = cv.CreateFileCapture(file_name)
+    frame = cv.QueryFrame(source)
 
     while(True):
         if len(frames) >= max_frame_count:
             break
-        frame = highgui.cvQueryFrame(source)
+        frame = cv.QueryFrame(source)
         if (frame == None):
             break
         if i % dt == 0:
             if get_picture_std(frame) > IMAGE_DEVIATION_TRESHOLD:
-                frames.append(cv.cvCloneImage(frame))
+                frames.append(cv.CloneImage(frame))
         i+=1
     return frames
 
@@ -36,15 +35,15 @@ def get_picture_std(img):
 
 if __name__ == '__main__':
     frames = get_frame_set(filename, 40, 10)
-    
-    highgui.cvNamedWindow("frame", highgui.CV_WINDOW_AUTOSIZE)
+
+    cv.NamedWindow("frame", cv.CV_WINDOW_AUTOSIZE)
     loop = True
     while(loop):
         for frame in frames:
-            highgui.cvShowImage("frame", frame)
-            char = highgui.cvWaitKey(33)
+            cv.ShowImage("frame", frame)
+            char = cv.WaitKey(33)
             if (char != -1):
                 if (ord(char) == 27):
                     loop = False
         
-    highgui.cvDestroyAllWindows()
+    cv.DestroyAllWindows()
