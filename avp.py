@@ -9,9 +9,9 @@ import numpy as np
 
 filename = "./tests/1.mp4"
 
-IMAGE_DEVIATION_TRESHOLD = 10.0
+IMAGE_DEVIATION_TRESHOLD = 30.0
 
-def get_frame_set(file_name, dt, max_frame_count = 10, skip_frames = 100):
+def get_frame_set(file_name, dt, max_frame_count = 10, skip_frames = 20):
     i = 0
     frames = []
 
@@ -31,7 +31,9 @@ def get_frame_set(file_name, dt, max_frame_count = 10, skip_frames = 100):
         if (frame == None):
             break
         if i % dt == 0:
-            if get_picture_std(frame) > IMAGE_DEVIATION_TRESHOLD:
+            treshold = get_picture_std(frame)
+            print treshold
+            if treshold > IMAGE_DEVIATION_TRESHOLD:
                 frames.append(cv.CloneImage(frame))
         i+=1
     return frames
