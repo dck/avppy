@@ -9,14 +9,20 @@ import numpy as np
 
 filename = "./tests/1.mp4"
 
-IMAGE_DEVIATION_TRESHOLD = 2.0
+IMAGE_DEVIATION_TRESHOLD = 10.0
 
-def get_frame_set(file_name, dt, max_frame_count = 10):
+def get_frame_set(file_name, dt, max_frame_count = 10, skip_frames = 100):
     i = 0
     frames = []
 
     source = cv.CreateFileCapture(file_name)
     frame = cv.QueryFrame(source)
+
+    while(True):
+        if i > skip_frames:
+            break
+        cv.QueryFrame(source)
+        i+=1
 
     while(True):
         if len(frames) >= max_frame_count:
