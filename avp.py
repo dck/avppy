@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding= utf-8 -*-
 
+import sys
 import logging
 
 import config as c
@@ -10,9 +11,35 @@ FORMAT = "[%(asctime)19s] %(video)20s | %(message)s"
 logging.basicConfig(format=FORMAT, filename=c.log_file, level=logging.INFO, datefmt='%d.%m.%Y %H:%M:%S')
 
 
-logging.info("asdasd", extra={"video": "asd.mp4"})
+def usage():
+    s = """
+    Usage: {scriptname} <filename>
+
+    This script removes logo on video, changes resolution,
+    converts and watermarks it
+
+        filename - name of video file
+    """ .format(scriptname = sys.argv[0])
+    print s
 
 
+
+
+if __name__ == '__main__':
+    if "--help" in sys.argv or len(sys.argv) < 2:
+        usage()
+        exit(1)
+
+    video_file = sys.argv[1]
+    extraLoggingDict = {
+        "video": video_file
+    }
+    logging.info("Processing started", extra=extraLoggingDict)
+
+
+
+
+    logging.info("Processing finished", extra=extraLoggingDict)
 
 
 
