@@ -23,7 +23,16 @@ def usage():
     print s
 
 
+def find_logo(video_file):
+    logging.info("Finding logo", extra={"video": video_file})      
+    return 10, 10, 100, 100
 
+def process_video(**kwargs):
+    logging.info("Processing video", extra={"video": kwargs["filename"]})
+    return True
+
+def make_thumbnails(video_file):
+    logging.info("Making thumbnails", extra={"video": video_file})
 
 if __name__ == '__main__':
     if "--help" in sys.argv or len(sys.argv) < 2:
@@ -35,9 +44,11 @@ if __name__ == '__main__':
         "video": video_file
     }
     logging.info("Processing started", extra=extraLoggingDict)
-
-
-
+    x, y, width, height = find_logo(video_file)
+    
+    isSuccess = process_video(filename = video_file, x = x, y = y, width = width, height = height)
+    if isSuccess and c.actions_thumbnails:
+        make_thumbnails(video_file)
 
     logging.info("Processing finished", extra=extraLoggingDict)
 
