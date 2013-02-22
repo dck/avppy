@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 
-actions_convert      = True
-actions_cut          = True
-actions_delogo       = True
-actions_watermarking = True
-actions_thumbnails   = True
+action_convert      = True
+action_cut          = True
+action_delogo       = True
+action_watermarking = True
+action_thumbnails   = True
 
 
 # video options

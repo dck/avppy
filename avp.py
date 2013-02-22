@@ -47,7 +47,7 @@ if __name__ == '__main__':
     x, y, width, height = find_logo(video_file)
     
     isSuccess = process_video(filename = video_file, x = x, y = y, width = width, height = height)
-    if isSuccess and c.actions_thumbnails:
+    if isSuccess and c.action_thumbnails:
         make_thumbnails(video_file)
 
     logging.info("Processing finished", extra=extraLoggingDict)
