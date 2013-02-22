@@ -32,3 +32,5 @@ delay = 2*60 # in seconds
 folders_thumbnail = "thumbnails"
 folders_old       = "old"
 folders_result    = "converted"
+
+log_file = "avp.log"
