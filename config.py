@@ -15,7 +15,7 @@ convertOptions = {
     "offsetx": -10, # '-' means from left 
     "offsety": -10 # '-' means from low
 }
-convertCommand = "avconv -i {inputfile} -ss 00:00:{startoffset} -strict experimental -vf \"drawtext=fontfile={pathtofont}: text='{logotext}':fontcolor={fontcolor}@1.0:fontsize={fontsize}:x={offsetx}:y={offsety}, delogo=x={x}:y={y}:w={w}:h={h}:band=10:show=0\" {outfile}"
+convertCommand = "avconv -i {inputfile} -ss {startoffset} -strict experimental -vf \"drawtext=fontfile={pathtofont}: text='{logotext}':fontcolor={fontcolor}@1.0:fontsize={fontsize}:x={offsetx}:y={offsety}, delogo=x={x}:y={y}:w={w}:h={h}:band=10:show=0\" {outfile}"
 
 
 # thumbnail options

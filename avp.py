@@ -31,7 +31,15 @@ def process_video(**kwargs):
     logging.info("Processing video", extra={"video": kwargs["inputfile"]})
     opts = c.convertOptions
     opts.update(kwargs)
-    opts["outfile"] = kwargs["inputfile"] + ".new"
+    opts["outfile"] = "{0}/{1}".format(c.folders_result, kwargs["inputfile"])
+    opts["startoffset"] = "{:02d}:{:02d}:{:02d}".format(opts["startoffset"] / 3600, opts["startoffset"] / 60, opts["startoffset"])
+    if opts["offsetx"] < 0:
+        print opts["width"]
+        print opts["offsetx"]
+        opts["offsetx"] = opts["width"] - (-opts["offsetx"] % opts["width"])
+        print opts["offsetx"]
+    if opts["offsety"] < 0:
+        opts["offsety"] = opts["height"] - (-opts["offsety"] % opts["height"])
     print c.convertCommand.format(**opts)
 
 
