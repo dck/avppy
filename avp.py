@@ -40,17 +40,14 @@ if __name__ == '__main__':
         exit(1)
 
     video_file = sys.argv[1]
-    extraLoggingDict = {
-        "video": video_file
-    }
-    logging.info("Processing started", extra=extraLoggingDict)
+    logging.info("Processing started", extra={"video": video_file})
     x, y, width, height = find_logo(video_file)
     
     isSuccess = process_video(filename = video_file, x = x, y = y, width = width, height = height)
     if isSuccess and c.action_thumbnails:
         make_thumbnails(video_file)
 
-    logging.info("Processing finished", extra=extraLoggingDict)
+    logging.info("Processing finished", extra={"video": video_file})
 
 
 
