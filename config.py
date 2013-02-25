@@ -2,27 +2,21 @@
 # -*- coding: utf-8 -*-
 
 
-action_convert      = True
-action_cut          = True
-action_delogo       = True
-action_watermarking = True
-action_thumbnails   = True
-
-
 # video options
-width   = 600
-height  = 450
-bitrate = 1800
+convertOptions = {
+    "width": 600,
+    "height": 450,
+    "bitrate": 1800,
+    "startoffset": 10, #in seconds
+    "pathtofont": "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+    "logotext": "http://asd.com",
+    "fontcolor": "white",
+    "fontsize": 20,
+    "offsetx": -10, # '-' means from left 
+    "offsety": -10 # '-' means from low
+}
+convertCommand = "avconv -i {inputfile} -ss 00:00:{startoffset} -strict experimental -vf \"drawtext=fontfile={pathtofont}: text='{logotext}':fontcolor={fontcolor}@1.0:fontsize={fontsize}:x={offsetx}:y={offsety}, delogo=x={x}:y={y}:w={w}:h={h}:band=10:show=0\" {outfile}"
 
-
-# cutting options
-startoffset = 10 #in seconds
-
-
-# watermarking options
-logotext = "http://asd.com"
-offsetx  = -10 # '-' means from left 
-offsety  = -10 # '-' means from low
 
 # thumbnail options
 delay = 2*60 # in seconds

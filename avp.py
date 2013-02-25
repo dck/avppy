@@ -28,7 +28,13 @@ def find_logo(video_file):
     return 10, 10, 100, 100
 
 def process_video(**kwargs):
-    logging.info("Processing video", extra={"video": kwargs["filename"]})
+    logging.info("Processing video", extra={"video": kwargs["inputfile"]})
+    opts = c.convertOptions
+    opts.update(kwargs)
+    opts["outfile"] = kwargs["inputfile"] + ".new"
+    print c.convertCommand.format(**opts)
+
+
     return True
 
 def make_thumbnails(video_file):
@@ -41,10 +47,10 @@ if __name__ == '__main__':
 
     video_file = sys.argv[1]
     logging.info("Processing started", extra={"video": video_file})
+
     x, y, width, height = find_logo(video_file)
-    
-    isSuccess = process_video(filename = video_file, x = x, y = y, width = width, height = height)
-    if isSuccess and c.action_thumbnails:
+    isSuccess = process_video(inputfile = video_file, x = x, y = y, w = width, h = height)
+    if isSuccess:
         make_thumbnails(video_file)
 
     logging.info("Processing finished", extra={"video": video_file})
