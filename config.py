@@ -9,13 +9,13 @@ convertOptions = {
     "bitrate": 1800,
     "startoffset": 10, #in seconds
     "pathtofont": "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
-    "logotext": "http://asd.com",
+    "logotext": "asd.com",
     "fontcolor": "white",
     "fontsize": 20,
     "offsetx": -10, # '-' means from left 
     "offsety": -10 # '-' means from low
 }
-convertCommand = "avconv -i {inputfile} -ss {startoffset} -strict experimental -vf \"drawtext=fontfile={pathtofont}: text='{logotext}':fontcolor={fontcolor}@1.0:fontsize={fontsize}:x={offsetx}:y={offsety}, delogo=x={x}:y={y}:w={w}:h={h}:band=10:show=0\" {outfile}"
+convertCommand = "avconv -i {inputfile} -y -strict experimental -s {width}:{height} -b {bitrate} -ss {startoffset} -c:v libx264 -c:a copy -vf \"drawtext=fontfile={pathtofont}:text='{logotext}':fontcolor={fontcolor}@1.0:fontsize={fontsize}:x={offsetx}:y={offsety}, delogo=x={x}:y={y}:w={w}:h={h}:band=10:show=0\" {outfile}"
 
 
 # thumbnail options

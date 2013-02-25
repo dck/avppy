@@ -3,6 +3,8 @@
 
 import sys
 import logging
+import subprocess
+import os
 
 import config as c
 
@@ -28,10 +30,11 @@ def find_logo(video_file):
     return 10, 10, 100, 100
 
 def process_video(**kwargs):
-    logging.info("Processing video", extra={"video": kwargs["inputfile"]})
+    d = {"video": os.path.basename(kwargs["inputfile"])}
+    logging.info("Processing video", extra=d)
     opts = c.convertOptions
     opts.update(kwargs)
-    opts["outfile"] = "{0}/{1}".format(c.folders_result, kwargs["inputfile"])
+    opts["outfile"] = "{0}/{1}".format(c.folders_result, d["video"])
     opts["startoffset"] = "{:02d}:{:02d}:{:02d}".format(opts["startoffset"] / 3600, opts["startoffset"] / 60, opts["startoffset"])
     if opts["offsetx"] < 0:
         print opts["width"]
@@ -40,7 +43,9 @@ def process_video(**kwargs):
         print opts["offsetx"]
     if opts["offsety"] < 0:
         opts["offsety"] = opts["height"] - (-opts["offsety"] % opts["height"])
-    print c.convertCommand.format(**opts)
+    command = c.convertCommand.format(**opts)
+    logging.info("Produced command: {}".format(command), extra=d)
+    subprocess.call([command], shell=True, stderr=subprocess.STDOUT)
 
 
     return True
