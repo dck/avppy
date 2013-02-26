@@ -6,8 +6,8 @@
 convertOptions = {
     "width": 600,
     "height": 450,
-    "bitrate": 1800,
-    "startoffset": 10, #in seconds
+    "bitrate": 900*1024, # bits/sec
+    "startoffset": 10, # in seconds
     "pathtofont": "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
     "logotext": "asd.com",
     "fontcolor": "white",
