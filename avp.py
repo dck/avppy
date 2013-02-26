@@ -5,13 +5,13 @@ import sys
 import logging
 import subprocess
 import os
+import sys
 
 import config as c
 
 FORMAT = "[%(asctime)19s] %(video)20s | %(message)s"
 
 logging.basicConfig(format=FORMAT, filename=c.log_file, level=logging.INFO, datefmt='%d.%m.%Y %H:%M:%S')
-
 
 def usage():
     s = """
@@ -30,23 +30,27 @@ def find_logo(video_file):
     return 10, 10, 100, 100
 
 def process_video(**kwargs):
-    d = {"video": os.path.basename(kwargs["inputfile"])}
-    logging.info("Processing video", extra=d)
     opts = c.convertOptions
     opts.update(kwargs)
-    opts["outfile"] = "{0}/{1}".format(c.folders_result, d["video"])
+    opts["outfile"] = "{0}/{1}".format(c.folders_result, os.path.basename(opts["inputfile"]))
     opts["startoffset"] = "{:02d}:{:02d}:{:02d}".format(opts["startoffset"] / 3600, opts["startoffset"] / 60, opts["startoffset"])
     if opts["offsetx"] < 0:
-        print opts["width"]
-        print opts["offsetx"]
         opts["offsetx"] = opts["width"] - (-opts["offsetx"] % opts["width"])
-        print opts["offsetx"]
     if opts["offsety"] < 0:
         opts["offsety"] = opts["height"] - (-opts["offsety"] % opts["height"])
-    command = c.convertCommand.format(**opts)
-    logging.info("Produced command: {}".format(command), extra=d)
-    subprocess.call([command], shell=True, stderr=subprocess.STDOUT)
 
+    logging.info("Processing video", extra={"video": opts["inputfile"]})
+    command = c.convertCommand.format(**opts)
+    logging.info("Produced command: {}".format(command), extra={"video": opts["inputfile"]})
+
+    sub = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    (stdout, stderr) = sub.communicate()
+    for s in stdout.split("\n"):
+        logging.info(s, extra={"video": opts["inputfile"]})
+
+    if  sub.returncode !=0:
+        sys.stderr.write("Error occured, see in {}\n".format(c.log_file))
+        return False
 
     return True
 
