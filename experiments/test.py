@@ -4,51 +4,45 @@
 import cv2
 import numpy as np
 
-tracked_contours = {}
-
-count = 0
+tracked_contours = []
 
 class Contour():
     def __init__(self, contour):
         self.data = get_contour_data(contour)
-        self.data_errors = [4, 4, 4, 4, 10]
-
-    def __hash__(self):
-        return hash((self.data[0], self.data[1], self.data[2], self.data[3]))
+        self.pixel_error = 5
+        self.score = 0
 
     def __eq__(self, other):
-        for i in range(len(self.data)-1):
-            #print "diff: ", abs(self.data[i]-other.data[i])
-            if abs(self.data[i]-other.data[i]) > self.data_errors[i]:
+        for i in range(len(self.data)):
+            if abs(self.data[i]-other.data[i]) > self.pixel_error:
                 return False
         return True
 
 def get_contour_data(contour):
     xx = np.array([ a[0][0] for a in contour ])
     yy = np.array([ a[0][1] for a in contour ])
-    return [xx.min(), yy.min(), xx.max(), yy.max(), cv2.contourArea(contour)]
+    return [xx.min(), yy.min(), xx.max(), yy.max()]
 
-def check_contours(contours, count):
-    to_del = []
+def check_contours(contours, count, img):
+    for tracked_contour in tracked_contours:
+        if count % 2 == 0:
+            tracked_contour.score -= 1
 
-    for t in tracked_contours:
-        if count % 3 == 0:
-            tracked_contours[t] -= 1
+        if tracked_contour.score < 0:
+            tracked_contours.remove(tracked_contour)
 
-        if tracked_contours[t] < 0:
-            to_del.append(t)
-        
-    for d in to_del:
-        del tracked_contours[d]
-    
     for contour in contours:
         c = Contour(contour)
         if c in tracked_contours:
-            tracked_contours[c] += 1
-            print tracked_contours[c], c.data[4]
-            if tracked_contours[c] > 30:
+            i = tracked_contours.index(c)
+            tracked_contours[i].score += 1
+            cv2.rectangle(img, (tracked_contours[i].data[0], \
+                tracked_contours[i].data[1]), (tracked_contours[i].data[2], \
+                tracked_contours[i].data[3]), (tracked_contours[i].score*10, tracked_contours[i].score*5, tracked_contours[i].score), tracked_contours[i].score)
+            if tracked_contours[i].score > 40:
                 return True, c
-        else: tracked_contours[c] = 1
+        else: tracked_contours.append(c)
+
     return False, None
 
 def drawContours(contours, img):
@@ -102,7 +96,7 @@ def detect(file_name):
 
         contours, hierarchy = cv2.findContours(mat,cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_L1)
         res = cv2.cvtColor(res, cv2.COLOR_GRAY2BGR)
-        a,b = check_contours(contours, count)
+        a,b = check_contours(contours, count, res)
         
         if a == True:
             cv2.rectangle(res, (b.data[0], b.data[1]), (b.data[2], b.data[3]), (0,255,0), 5)
@@ -110,7 +104,7 @@ def detect(file_name):
             k = cv2.waitKey(5000)
             break
 
-        drawContours(contours, res)
+        #drawContours(contours, res)
 
         cv2.imshow('avg',res)
         k = cv2.waitKey(20)
