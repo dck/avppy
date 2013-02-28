@@ -187,11 +187,8 @@ class Detector():
         contours,_ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         return contours
 
-if __name__ == "__main__":
-    #detect("../tests/4.mp4")
-    fileName = "../tests/4.mp4"
-
-    cv2.namedWindow("frame")
+def process(fileName):
+#    cv2.namedWindow("frame")
 
     stream = cv2.VideoCapture(fileName)
 
@@ -204,8 +201,7 @@ if __name__ == "__main__":
         if t % 5 != 0:
             _,frame = stream.read()
             if frame == None:
-                print detector.getCoords()
-                break
+                return detector.getCoords()
             t+=1
             continue
         t += 1
@@ -213,18 +209,22 @@ if __name__ == "__main__":
         _,frame = stream.read()
 
         if frame == None:
-            print detector.getCoords()
-            break
+            return detector.getCoords()
 
         detector.update(frame)
         if detector.isDetected():
-            coords = detector.getCoords()
-            if coords == None:
-                break
-            cv2.rectangle(frame, coords[0], coords[1], (0,255,0), 5)
-            cv2.imshow('frame',frame)
-            cv2.waitKey(5000)
+            return detector.getCoords()
+#            returncv2.rectangle(frame, coords[0], coords[1], (0,255,0), 5)
+#            cv2.imshow('frame',frame)
+#            cv2.waitKey(5000)
             break
 
-    cv2.destroyAllWindows()
+#    cv2.destroyAllWindows()
     stream.release()
+
+
+if __name__ == "__main__":
+    
+    fileName = "../tests/4.mp4"
+    #detect(fileName)
+    print process(fileName)
