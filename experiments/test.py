@@ -114,5 +114,117 @@ def detect(file_name):
     cv2.destroyAllWindows()
     c.release()
 
+
+class Detector():
+    ADD_WEIGHT = 0.005
+    MORPH_WEIGHT = (40, 40)
+    TRESHOLD = 200
+    MAX_SCORE = 40
+
+    def __init__(self, frame):
+        self.tick = 0
+        self._initAvg(frame)
+        self._isDetected = False
+        self.trackedContours = []
+
+    def update(self, frame):
+        self.tick += 1
+        self._updateAvg(frame)
+        res = self._getCurrentAvgBinary()
+        res = self._applyDilatation(res)
+        contours = self._getContours(res)
+        self._updateTrackedContours(contours)
+
+    def isDetected(self):
+        return self._isDetected
+
+    def getCoords(self):
+        max_score = 0
+        contour = None
+        for trackedContour in self.trackedContours:
+            if max_score < trackedContour.score:
+                max_score = trackedContour.score
+                contour = trackedContour
+        if contour != None:
+            return [(contour.data[0], contour.data[1]), (contour.data[2], contour.data[3])]
+        return None
+
+    def _updateTrackedContours(self, contours):
+        for trackedContour in self.trackedContours:
+            if self.tick % 2 == 0:
+                trackedContour.score -= 1
+
+            if trackedContour.score < 0:
+                self.trackedContours.remove(trackedContour)
+
+        for contour in contours:
+            c = Contour(contour)
+            if c in self.trackedContours:
+                i = self.trackedContours.index(c)
+                self.trackedContours[i].score += 1
+                if self.trackedContours[i].score > Detector.MAX_SCORE:
+                    self._isDetected = True
+            else: self.trackedContours.append(c)
+
+    def _initAvg(self, frame):
+        f = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        self.avg = np.float32(f)
+
+    def _updateAvg(self, frame):
+        frame = np.float32(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
+        cv2.accumulateWeighted(frame, self.avg, Detector.ADD_WEIGHT)
+
+    def _getCurrentAvgBinary(self):
+        res = cv2.convertScaleAbs(self.avg)
+        _,res = cv2.threshold(res, Detector.TRESHOLD, 255, cv2.THRESH_BINARY)
+        return res            
+
+    def _applyDilatation(self, frame):
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, Detector.MORPH_WEIGHT)
+        return cv2.dilate(frame, kernel)
+
+    def _getContours(self, frame):
+        contours,_ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        return contours
+
 if __name__ == "__main__":
-    detect("../tests/4.mp4")
+    #detect("../tests/4.mp4")
+    fileName = "../tests/4.mp4"
+
+    cv2.namedWindow("frame")
+
+    stream = cv2.VideoCapture(fileName)
+
+    _,frame = stream.read()
+
+    detector = Detector(frame)
+
+    t = 0
+    while(1):
+        if t % 5 != 0:
+            _,frame = stream.read()
+            if frame == None:
+                print detector.getCoords()
+                break
+            t+=1
+            continue
+        t += 1
+
+        _,frame = stream.read()
+
+        if frame == None:
+            print detector.getCoords()
+            break
+
+        detector.update(frame)
+        if detector.isDetected():
+            coords = detector.getCoords()
+            if coords == None:
+                break
+            cv2.rectangle(frame, coords[0], coords[1], (0,255,0), 5)
+            cv2.imshow('frame',frame)
+            cv2.waitKey(5000)
+            break
+
+    cv2.destroyAllWindows()
+    stream.release()
