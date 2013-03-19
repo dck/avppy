@@ -45,8 +45,7 @@ def process_video(**kwargs):
 
     sub = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     (stdout, stderr) = sub.communicate()
-    for s in stdout.split("\n"):
-        logging.info(s, extra={"video": opts["inputfile"]})
+    logging.info(stdout, extra={"video": opts["inputfile"]})
 
     if  sub.returncode !=0:
         sys.stderr.write("Error occured, see in {}\n".format(c.log_file))
