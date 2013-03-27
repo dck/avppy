@@ -90,7 +90,7 @@ def make_thumbnails(video_file):
     full.save(os.path.join(thum_f, os.path.basename(video_file) + ".png"))
 
     for i in glob.glob("{}/{}*.png".format(screen_folder, os.path.basename(video_file))):
-        print i
+        os.remove(i)
 
 
 
@@ -116,6 +116,9 @@ if __name__ == '__main__':
     isSuccess = process_video(inputfile = video_file, x = x, y = y, w = width, h = height)
     if isSuccess:
         make_thumbnails(video_file)
+
+    old_f =  os.path.join(WORKFOLDER, c.folders_old)
+    os.rename(video_file, os.path.join(old_f, os.path.basename(video_file)))
 
     logging.info("Processing finished", extra={"video": video_file})
 
