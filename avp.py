@@ -7,6 +7,7 @@ import subprocess
 import os
 import sys
 from PIL import Image
+import glob
 
 import config as c
 
@@ -69,19 +70,28 @@ def make_thumbnails(video_file):
     width = c.thumbnails_width
     height = c.thumbnails_height
 
-    os.system("ffmpeg -i {filename} -f image2 -r 1/{dur} {imagename}%d.png".format(filename=sys.argv[1], dur=total/(width*height), imagename=video_file))
+    screen_folder = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+    os.system("ffmpeg -i {filename} -f image2 -r 1/{dur} {folder}/{imagename}.%d.png".format(filename=sys.argv[1],
+                                                                                   dur=total/(width*height),
+                                                                                   folder = screen_folder,
+                                                                                   imagename=os.path.basename(video_file)))
 
     full = None
     for y in xrange(width):
         for x in xrange(height):
-            img = Image.open("%s%i.png" % (video_file, (y*height+x+2)))
+            img = Image.open("%s/%s.%i.png" % (screen_folder, os.path.basename(video_file), (y*height+x+2)))
             w, h = img.size
             if full is None:
                 full = Image.new("RGB", (w*width, h*height))
             full.paste(img, (x*w, y*h))
 
     thum_f =  os.path.join(WORKFOLDER, c.folders_thumbnail)
-    full.save(os.path.join(thum_f, video_file + ".png"))
+    full.save(os.path.join(thum_f, os.path.basename(video_file) + ".png"))
+
+    for i in glob.glob("{}/{}*.png".format(screen_folder, os.path.basename(video_file))):
+        print i
+
 
 
 def prepare_folders():
