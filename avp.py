@@ -6,12 +6,15 @@ import logging
 import subprocess
 import os
 import sys
+from PIL import Image
 
 import config as c
 
 FORMAT = "[%(asctime)19s] %(video)20s | %(message)s"
 
 logging.basicConfig(format=FORMAT, filename=c.log_file, level=logging.INFO, datefmt='%d.%m.%Y %H:%M:%S')
+
+WORKFOLDER = os.path.abspath(os.path.dirname(sys.argv[0]))
 
 def usage():
     s = """
@@ -32,7 +35,8 @@ def find_logo(video_file):
 def process_video(**kwargs):
     opts = c.convertOptions
     opts.update(kwargs)
-    opts["outfile"] = "{0}/{1}".format(c.folders_result, os.path.basename(opts["inputfile"]))
+    conv_f =  os.path.join(WORKFOLDER, c.folders_result)
+    opts["outfile"] = "{0}/{1}".format(conv_f, os.path.basename(opts["inputfile"]))
     opts["startoffset"] = "{:02d}:{:02d}:{:02d}".format(opts["startoffset"] / 3600, opts["startoffset"] / 60, opts["startoffset"])
     if opts["offsetx"] < 0:
         opts["offsetx"] = opts["width"] - (-opts["offsetx"] % opts["width"])
@@ -55,12 +59,46 @@ def process_video(**kwargs):
 
 def make_thumbnails(video_file):
     logging.info("Making thumbnails", extra={"video": video_file})
+    chout, chin, cherr = os.popen3("ffmpeg -i %s" % sys.argv[1])
+    out = cherr.read()
+    dp = out.index("Duration: ")
+    duration = out[dp+10:dp+out[dp:].index(",")]
+    hh, mm, ss = map(float, duration.split(":"))
+    total = (hh*60 + mm)*60 + ss
+
+    width = c.thumbnails_width
+    height = c.thumbnails_height
+
+    os.system("ffmpeg -i {filename} -f image2 -r 1/{dur} {imagename}%d.png".format(filename=sys.argv[1], dur=total/(width*height), imagename=video_file))
+
+    full = None
+    for y in xrange(width):
+        for x in xrange(height):
+            img = Image.open("%s%i.png" % (video_file, (y*height+x+2)))
+            w, h = img.size
+            if full is None:
+                full = Image.new("RGB", (w*width, h*height))
+            full.paste(img, (x*w, y*h))
+
+    thum_f =  os.path.join(WORKFOLDER, c.folders_thumbnail)
+    full.save(os.path.join(thum_f, video_file + ".png"))
+
+
+def prepare_folders():
+    conv_f =  os.path.join(WORKFOLDER, c.folders_result)
+    thum_f =  os.path.join(WORKFOLDER, c.folders_thumbnail)
+    old_f =  os.path.join(WORKFOLDER, c.folders_old)
+
+    folder_list = [conv_f, thum_f, old_f]
+    for f in folder_list:
+        if not os.path.exists(f):
+            os.makedirs(f)
 
 if __name__ == '__main__':
     if "--help" in sys.argv or len(sys.argv) < 2:
         usage()
         exit(1)
-
+    prepare_folders()
     video_file = sys.argv[1]
     logging.info("Processing started", extra={"video": video_file})
 

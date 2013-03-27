@@ -19,13 +19,13 @@ convertCommand = "ffmpeg -i {inputfile} -y -strict experimental -s {width}:{heig
 
 
 # thumbnail options
-delay = 2*60 # in seconds
+thumbnails_width  = 3
+thumbnails_height = 3
 
 
 # custom options
 folders_thumbnail = "thumbnails"
 folders_old       = "old"
 folders_result    = "converted"
-folders_videos    = "videos"
 
 log_file = "avp.log"
