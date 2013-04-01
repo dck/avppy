@@ -80,7 +80,8 @@ class Detector():
 
     def _getCurrentAvgBinary(self, treshold):
         res = cv2.convertScaleAbs(self.avg)
-        _,res = cv2.threshold(res, treshold, 255, cv2.THRESH_BINARY)
+        min, max = np.min(self.avg), np.max(self.avg)
+        _,res = cv2.threshold(res, ((max-min)*treshold)+min, 255, cv2.THRESH_BINARY)
         return res
 
     def _applyDilatation(self, frame, morph_radious):
@@ -125,7 +126,7 @@ def process(fileName, max_contour_score, frame_add_weight, morph_radious, tresho
 if __name__ == "__main__":
     FRAME_ADD_WEIGHT = 0.005
     MORPH_RADIOUS = 20
-    TRESHOLD = 200
+    TRESHOLD = 0.8
     MAX_CONTOUR_SCORE = 40
 
     fileName = "./tests/1.avi"

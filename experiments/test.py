@@ -90,7 +90,10 @@ def detect(file_name):
         
         cv2.imshow('grey',res)
 
-        thresh, res = cv2.threshold(res, 200, 255, cv2.THRESH_BINARY)
+        treshold = ((np.max(res)-np.min(res))*0.85)+np.min(res)
+        print treshold
+
+        thresh, res = cv2.threshold(res, treshold, 255, cv2.THRESH_BINARY)
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(40,40))
         mat = cv2.dilate(res,kernel)
 
@@ -225,6 +228,6 @@ def process(fileName):
 
 
 if __name__ == "__main__":
-    fileName = "../tests/1.mp4"
+    fileName = "../tests/3.mp4"
     #detect(fileName)
     print process(fileName)

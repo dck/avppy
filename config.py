@@ -33,5 +33,5 @@ log_file = "avp.log"
 # logo detection algorithm parameters
 FRAME_ADD_WEIGHT = 0.005
 MORPH_RADIOUS = 20
-TRESHOLD = 200
+TRESHOLD = 0.8 # relative
 MAX_CONTOUR_SCORE = 40
