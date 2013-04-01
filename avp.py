@@ -11,6 +11,8 @@ import glob
 
 import config as c
 
+from detect import process as find_logo
+
 FORMAT = "[%(asctime)19s] %(video)20s | %(message)s"
 
 logging.basicConfig(format=FORMAT, filename=c.log_file, level=logging.INFO, datefmt='%d.%m.%Y %H:%M:%S')
@@ -27,11 +29,6 @@ def usage():
         filename - name of video file
     """ .format(scriptname = sys.argv[0])
     print s
-
-
-def find_logo(video_file):
-    logging.info("Finding logo", extra={"video": video_file})      
-    return 10, 10, 100, 100
 
 def process_video(**kwargs):
     opts = c.convertOptions
@@ -91,8 +88,6 @@ def make_thumbnails(video_file):
 
     for i in glob.glob("{}/{}*.png".format(screen_folder, os.path.basename(video_file))):
         os.remove(i)
-
-
 
 def prepare_folders():
     conv_f =  os.path.join(WORKFOLDER, c.folders_result)

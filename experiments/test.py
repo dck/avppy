@@ -3,6 +3,7 @@
 
 import cv2
 import numpy as np
+from time import clock
 
 tracked_contours = []
 
@@ -52,7 +53,6 @@ def drawContours(contours, img):
 
 def detect(file_name):
     c = cv2.VideoCapture(file_name)
-
     _,f = c.read()
     f = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)
 
@@ -212,6 +212,7 @@ def process(fileName):
             return detector.getCoords()
 
         detector.update(frame)
+
         if detector.isDetected():
             return detector.getCoords()
 #            returncv2.rectangle(frame, coords[0], coords[1], (0,255,0), 5)
@@ -224,7 +225,6 @@ def process(fileName):
 
 
 if __name__ == "__main__":
-    
-    fileName = "../tests/4.mp4"
+    fileName = "../tests/1.mp4"
     #detect(fileName)
     print process(fileName)
