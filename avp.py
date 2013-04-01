@@ -107,7 +107,7 @@ if __name__ == '__main__':
     video_file = sys.argv[1]
     logging.info("Processing started", extra={"video": video_file})
 
-    x, y, width, height = find_logo(video_file)
+    x, y, width, height = find_logo(video_file, c.MAX_CONTOUR_SCORE, c.FRAME_ADD_WEIGHT, c.MORPH_RADIOUS, c.TRESHOLD)
     isSuccess = process_video(inputfile = video_file, x = x, y = y, w = width, h = height)
     if isSuccess:
         make_thumbnails(video_file)

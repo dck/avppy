@@ -29,3 +29,9 @@ folders_old       = "old"
 folders_result    = "converted"
 
 log_file = "avp.log"
+
+# logo detection algorithm parameters
+FRAME_ADD_WEIGHT = 0.005
+MORPH_RADIOUS = 20
+TRESHOLD = 200
+MAX_CONTOUR_SCORE = 40
