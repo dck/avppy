@@ -204,14 +204,14 @@ def process_video(**kwargs):
 
     logging.info("Processing video", extra={"video": opts["inputfile"]})
     command = convertCommand.format(**opts)
-    logging.info("Produced command: {}".format(command), extra={"video": opts["inputfile"]})
+    logging.info("Produced command: {c}".format(c=command), extra={"video": opts["inputfile"]})
 
     sub = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     (stdout, stderr) = sub.communicate()
     logging.info(stdout, extra={"video": opts["inputfile"]})
 
     if  sub.returncode !=0:
-        sys.stderr.write("Error occured, see in {}\n".format(log_file))
+        sys.stderr.write("Error occured, see in {f}\n".format(f=log_file))
         return False
 
     return True
@@ -247,7 +247,7 @@ def make_thumbnails(video_file):
     thum_f =  os.path.join(WORKFOLDER, folders_thumbnail)
     full.save(os.path.join(thum_f, os.path.basename(video_file) + ".png"))
 
-    for i in glob.glob("{}/{}*.png".format(screen_folder, os.path.basename(video_file))):
+    for i in glob.glob("{dir}/{file}*.png".format(dir = screen_folder, file = {os.path.basename(video_file))):
         os.remove(i)
 
 def prepare_folders():
