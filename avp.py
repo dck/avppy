@@ -40,6 +40,7 @@ thumbnails_height = 3
 folders_thumbnail = "thumbnails"
 folders_old       = "old"
 folders_result    = "converted"
+folders_video     = "video" #absolute path
 
 log_file = "avp.log"
 
@@ -102,7 +103,7 @@ class Detector():
                 contour = trackedContour
         if contour != None:
             return [contour.data[0], contour.data[1], contour.data[2]-contour.data[0], contour.data[3]-contour.data[1]]
-        return None
+        return []
 
     def _updateTrackedContours(self, contours, max_contour_score):
         for trackedContour in self.trackedContours:
@@ -258,19 +259,29 @@ def prepare_folders():
             os.makedirs(f)
 
 if __name__ == '__main__':
-    if "--help" in sys.argv or len(sys.argv) < 2:
+    if "--help" in sys.argv:
         usage()
         exit(1)
-    prepare_folders()
-    video_file = sys.argv[1]
-    logging.info("Processing started", extra={"video": video_file})
 
-    x, y, width, height = find_logo(video_file, MAX_CONTOUR_SCORE, FRAME_ADD_WEIGHT, MORPH_RADIOUS, TRESHOLD)
-    isSuccess = process_video(inputfile = video_file, x = x, y = y, w = width, h = height)
-    if isSuccess:
+    prepare_folders()
+
+    for video_file in glob.glob("{}/*.*".format(folders_video)):
+        logging.info("Processing started", extra={"video": video_file})
+
+        coords = find_logo(video_file, MAX_CONTOUR_SCORE, FRAME_ADD_WEIGHT, MORPH_RADIOUS, TRESHOLD)
+        if not coords:
+            logging.info("Cant find the logo on this video", extra={"video": video_file})
+            continue
+
+        x, y, width, height = coords
+        isSuccess = process_video(inputfile = video_file, x = x, y = y, w = width, h = height)
+        if not isSuccess:
+            logging.info("Video can't be processed", extra={"video": video_file})
+            continue
+            
         make_thumbnails(video_file)
 
-    old_f =  os.path.join(WORKFOLDER, folders_old)
-    os.rename(video_file, os.path.join(old_f, os.path.basename(video_file)))
+        old_f =  os.path.join(WORKFOLDER, folders_old)
+        os.rename(video_file, os.path.join(old_f, os.path.basename(video_file)))
 
-    logging.info("Processing finished", extra={"video": video_file})
+        logging.info("Processing finished", extra={"video": video_file})
