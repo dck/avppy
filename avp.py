@@ -218,7 +218,7 @@ def process_video(**kwargs):
 
 def make_thumbnails(video_file):
     logging.info("Making thumbnails", extra={"video": video_file})
-    chout, chin, cherr = os.popen3("ffmpeg -i %s" % sys.argv[1])
+    chout, chin, cherr = os.popen3("ffmpeg -i %s" % video_file)
     out = cherr.read()
     dp = out.index("Duration: ")
     duration = out[dp+10:dp+out[dp:].index(",")]
