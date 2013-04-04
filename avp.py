@@ -247,7 +247,7 @@ def make_thumbnails(video_file):
     thum_f =  os.path.join(WORKFOLDER, folders_thumbnail)
     full.save(os.path.join(thum_f, os.path.basename(video_file) + ".png"))
 
-    for i in glob.glob("{dir}/{file}*.png".format(dir = screen_folder, file = {os.path.basename(video_file))):
+    for i in glob.glob("{dir}/{file}*.png".format(dir = screen_folder, file = (os.path.basename(video_file)))):
         os.remove(i)
 
 def prepare_folders():
