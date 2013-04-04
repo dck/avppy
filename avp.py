@@ -6,18 +6,176 @@ import logging
 import subprocess
 import os
 import sys
-from PIL import Image
+import cv2
 import glob
 
-import config as c
+import numpy as np
+from PIL import Image
 
-from detect import process as find_logo
+############################################################################
+################################ Options ###################################
+
+# video options
+convertOptions = {
+    "width": 600,
+    "height": 450,
+    "bitrate": 900*1024, # bits/sec
+    "startoffset": 10, # in seconds
+    "pathtofont": "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+    "logotext": "asd.com",
+    "fontcolor": "white",
+    "fontsize": 20,
+    "offsetx": -10, # '-' means from left 
+    "offsety": -10 # '-' means from low
+}
+convertCommand = "ffmpeg -i {inputfile} -y -strict experimental -s {width}:{height} -b {bitrate} -ss {startoffset} -vcodec libx264 -acodec copy -vf \"drawtext=fontfile={pathtofont}:text='{logotext}':fontcolor={fontcolor}@1.0:fontsize={fontsize}:x={offsetx}:y={offsety}, delogo=x={x}:y={y}:w={w}:h={h}:band=10:show=0\" {outfile}"
+
+
+# thumbnail options
+thumbnails_width  = 3
+thumbnails_height = 3
+
+
+# custom options
+folders_thumbnail = "thumbnails"
+folders_old       = "old"
+folders_result    = "converted"
+
+log_file = "avp.log"
+
+# logo detection algorithm parameters
+FRAME_ADD_WEIGHT = 0.005
+MORPH_RADIOUS = 20
+TRESHOLD = 0.8 # relative
+MAX_CONTOUR_SCORE = 40
 
 FORMAT = "[%(asctime)19s] %(video)20s | %(message)s"
-
-logging.basicConfig(format=FORMAT, filename=c.log_file, level=logging.INFO, datefmt='%d.%m.%Y %H:%M:%S')
-
+logging.basicConfig(format=FORMAT, filename=log_file, level=logging.INFO, datefmt='%d.%m.%Y %H:%M:%S')
 WORKFOLDER = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+############################################################################
+############################ Logo finder ###################################
+
+class Contour():
+    PIXEL_ERROR_SIZE = 5
+
+    def __init__(self, contour):
+        self.data = self.get_contour_data(contour)
+        self.score = 0
+
+    def __eq__(self, other):
+        for i in range(len(self.data)):
+            if abs(self.data[i]-other.data[i]) > Contour.PIXEL_ERROR_SIZE:
+                return False
+        return True
+
+    def get_contour_data(self, contour):
+        xx = np.array([ a[0][0] for a in contour ])
+        yy = np.array([ a[0][1] for a in contour ])
+        return [xx.min(), yy.min(), xx.max(), yy.max()]
+
+
+class Detector():
+    def __init__(self, frame):
+        self.tick = 0
+        self._initAvg(frame)
+        self._isDetected = False
+        self.trackedContours = []
+
+    def update(self, frame, max_contour_score, frame_add_weight, morph_radious, treshold):
+        self.tick += 1
+        self._updateAvg(frame, frame_add_weight)
+        res = self._getCurrentAvgBinary(treshold)
+        res = self._applyDilatation(res, morph_radious)
+        contours = self._getContours(res)
+        self._updateTrackedContours(contours, max_contour_score)
+
+    def isDetected(self):
+        return self._isDetected
+
+    def getCoords(self):
+        max_score = 0
+        contour = None
+        for trackedContour in self.trackedContours:
+            if max_score < trackedContour.score:
+                max_score = trackedContour.score
+                contour = trackedContour
+        if contour != None:
+            return [contour.data[0], contour.data[1], contour.data[2]-contour.data[0], contour.data[3]-contour.data[1]]
+        return None
+
+    def _updateTrackedContours(self, contours, max_contour_score):
+        for trackedContour in self.trackedContours:
+            if self.tick % 2 == 0:
+                trackedContour.score -= 1
+
+            if trackedContour.score < 0:
+                self.trackedContours.remove(trackedContour)
+
+        for contour in contours:
+            c = Contour(contour)
+            if c in self.trackedContours:
+                i = self.trackedContours.index(c)
+                self.trackedContours[i].score += 1
+                if self.trackedContours[i].score > max_contour_score:
+                    self._isDetected = True
+            else: self.trackedContours.append(c)
+
+    def _initAvg(self, frame):
+        f = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        self.avg = np.float32(f)
+
+    def _updateAvg(self, frame, frame_add_weight):
+        frame = np.float32(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
+        cv2.accumulateWeighted(frame, self.avg, frame_add_weight)
+
+    def _getCurrentAvgBinary(self, treshold):
+        res = cv2.convertScaleAbs(self.avg)
+        min, max = np.min(self.avg), np.max(self.avg)
+        _,res = cv2.threshold(res, ((max-min)*treshold)+min, 255, cv2.THRESH_BINARY)
+        return res
+
+    def _applyDilatation(self, frame, morph_radious):
+        morph_radious *= 2;
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (morph_radious, morph_radious))
+        return cv2.dilate(frame, kernel)
+
+    def _getContours(self, frame):
+        contours,_ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        return contours
+
+def find_logo(fileName, max_contour_score, frame_add_weight, morph_radious, treshold):
+    stream = cv2.VideoCapture(fileName)
+
+    _,frame = stream.read()
+
+    detector = Detector(frame)
+
+    t = 0
+    while(1):
+        if t % 5 != 0:
+            _,frame = stream.read()
+            if frame == None:
+                return detector.getCoords()
+            t+=1
+            continue
+        t += 1
+
+        _,frame = stream.read()
+
+        if frame == None:
+            return detector.getCoords()
+
+        detector.update(frame, max_contour_score, frame_add_weight, morph_radious, treshold)
+
+        if detector.isDetected():
+            return detector.getCoords()
+            break
+
+    stream.release()
+
+############################################################################
+############################## Other logics ################################
 
 def usage():
     s = """
@@ -31,9 +189,9 @@ def usage():
     print s
 
 def process_video(**kwargs):
-    opts = c.convertOptions
+    opts = convertOptions
     opts.update(kwargs)
-    conv_f =  os.path.join(WORKFOLDER, c.folders_result)
+    conv_f =  os.path.join(WORKFOLDER, folders_result)
     opts["outfile"] = "{0}/{1}".format(conv_f, os.path.basename(opts["inputfile"]))
     opts["startoffset"] = "{:02d}:{:02d}:{:02d}".format(opts["startoffset"] / 3600, opts["startoffset"] / 60, opts["startoffset"])
     if opts["offsetx"] < 0:
@@ -42,7 +200,7 @@ def process_video(**kwargs):
         opts["offsety"] = opts["height"] - (-opts["offsety"] % opts["height"])
 
     logging.info("Processing video", extra={"video": opts["inputfile"]})
-    command = c.convertCommand.format(**opts)
+    command = convertCommand.format(**opts)
     logging.info("Produced command: {}".format(command), extra={"video": opts["inputfile"]})
 
     sub = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -50,7 +208,7 @@ def process_video(**kwargs):
     logging.info(stdout, extra={"video": opts["inputfile"]})
 
     if  sub.returncode !=0:
-        sys.stderr.write("Error occured, see in {}\n".format(c.log_file))
+        sys.stderr.write("Error occured, see in {}\n".format(log_file))
         return False
 
     return True
@@ -64,8 +222,8 @@ def make_thumbnails(video_file):
     hh, mm, ss = map(float, duration.split(":"))
     total = (hh*60 + mm)*60 + ss
 
-    width = c.thumbnails_width
-    height = c.thumbnails_height
+    width = thumbnails_width
+    height = thumbnails_height
 
     screen_folder = os.path.abspath(os.path.dirname(sys.argv[0]))
 
@@ -83,16 +241,16 @@ def make_thumbnails(video_file):
                 full = Image.new("RGB", (w*width, h*height))
             full.paste(img, (x*w, y*h))
 
-    thum_f =  os.path.join(WORKFOLDER, c.folders_thumbnail)
+    thum_f =  os.path.join(WORKFOLDER, folders_thumbnail)
     full.save(os.path.join(thum_f, os.path.basename(video_file) + ".png"))
 
     for i in glob.glob("{}/{}*.png".format(screen_folder, os.path.basename(video_file))):
         os.remove(i)
 
 def prepare_folders():
-    conv_f =  os.path.join(WORKFOLDER, c.folders_result)
-    thum_f =  os.path.join(WORKFOLDER, c.folders_thumbnail)
-    old_f =  os.path.join(WORKFOLDER, c.folders_old)
+    conv_f =  os.path.join(WORKFOLDER, folders_result)
+    thum_f =  os.path.join(WORKFOLDER, folders_thumbnail)
+    old_f =  os.path.join(WORKFOLDER, folders_old)
 
     folder_list = [conv_f, thum_f, old_f]
     for f in folder_list:
@@ -107,128 +265,12 @@ if __name__ == '__main__':
     video_file = sys.argv[1]
     logging.info("Processing started", extra={"video": video_file})
 
-    x, y, width, height = find_logo(video_file, c.MAX_CONTOUR_SCORE, c.FRAME_ADD_WEIGHT, c.MORPH_RADIOUS, c.TRESHOLD)
+    x, y, width, height = find_logo(video_file, MAX_CONTOUR_SCORE, FRAME_ADD_WEIGHT, MORPH_RADIOUS, TRESHOLD)
     isSuccess = process_video(inputfile = video_file, x = x, y = y, w = width, h = height)
     if isSuccess:
         make_thumbnails(video_file)
 
-    old_f =  os.path.join(WORKFOLDER, c.folders_old)
+    old_f =  os.path.join(WORKFOLDER, folders_old)
     os.rename(video_file, os.path.join(old_f, os.path.basename(video_file)))
 
     logging.info("Processing finished", extra={"video": video_file})
-
-
-
-
-
-
-
-# import cv
-# import numpy as np
-# import PIL
-# import matplotlib.pyplot as plt
-
-# filename = "./tests/1.mp4"
-
-# IMAGE_DEVIATION_TRESHOLD = 10.0
-
-# def get_frame_set(file_name, dt, max_frame_count = 10, skip_frames = 20):
-#     i = 0
-#     frames = []
-
-#     source = cv.CreateFileCapture(file_name)
-#     frame = cv.QueryFrame(source)
-
-#     while(True):
-#         if i > skip_frames:
-#             break
-#         cv.QueryFrame(source)
-#         i+=1
-
-#     while(True):
-#         if len(frames) >= max_frame_count:
-#             break
-#         frame = cv.QueryFrame(source)
-#         if (frame == None):
-#             break
-#         if i % dt == 0:
-#             treshold = get_picture_std(frame)
-#             if treshold > IMAGE_DEVIATION_TRESHOLD:
-#                 print treshold
-#                 frames.append(cv.CloneImage(frame))
-#         i+=1
-#     return frames
-
-# def get_picture_std(img):
-#     return np.asarray(img[:,:]).std(axis=1).std()
-
-# def process(frame_set):
-#     images = []
-#     for frame in frame_set:
-#         asd = PIL.Image.fromstring('RGB',cv.GetSize(frame),frame.tostring(),'raw','BGR',frame.width*3,0)
-#         images.append(np.asarray(asd))
-
-#     sample_images = np.concatenate([image.reshape(1,image.shape[0], image.shape[1],image.shape[2]) 
-#                                 for image in images], axis=0)
-
-#     # plt.figure(1)
-#     # for i in range(sample_images.shape[0]):
-#     #     plt.subplot(2,2,i+1)
-#     #     plt.imshow(sample_images[i,...])
-#     #     plt.axis("off")
-#     # plt.subplots_adjust(0,0,1,1,0,0)
-
-#     # # determine per-pixel variablility, std() over all images
-#     variability = sample_images.std(axis=0).sum(axis=2)
-
-#     # show image of these variabilities
-#     plt.figure(2)
-#     plt.imshow(variability, cmap=plt.cm.gray, interpolation="nearest", origin="lower")
-
-
-
-#     # for i in xrange(len(variability)):
-#     #     for j in xrange(len(variability[i])):
-#     #         if variability[i][j] > 30:
-#     #             variability[i][j] = 255
-#     #         else:
-#     #             variability[i][j] = 0
-
-
-#     # determine bounding box
-#     thresholds = [5,10,12,16,18,22,25]
-#     colors = ["r", "g", "b"] * 3
-#     for threshold, color in zip(thresholds, colors): #variability.mean()
-#         non_empty_columns = np.where(variability.min(axis=0)<threshold)[0]
-#         non_empty_rows = np.where(variability.min(axis=1)<threshold)[0]
-#         try:
-#             boundingBox = (min(non_empty_rows), max(non_empty_rows), min(non_empty_columns), max(non_empty_columns))
-#         except ValueError:
-#             print "{} is too small".format(threshold)
-#             continue
-#         # plot and print boundingBox
-#         bb = boundingBox
-#         plt.plot([bb[2], bb[3], bb[3], bb[2], bb[2]],
-#                  [bb[0], bb[0],bb[1], bb[1], bb[0]])
-#         print boundingBox
-
-#     plt.xlim(0,variability.shape[1])
-#     plt.ylim(variability.shape[0],0)
-#     plt.legend()
-
-#     plt.show()
-
-# if __name__ == '__main__':
-#     frames = get_frame_set(filename, 50, 7, 5)
-
-#     # cv.NamedWindow("frame", cv.CV_WINDOW_AUTOSIZE)
-#     # loop = True
-#     # while(loop):
-#     #     for frame in frames:
-#     #         cv.ShowImage("frame", frame)
-#     #         char = cv.WaitKey(33)
-#     #         if (char == 27):
-#     #             loop = False
-#     # cv.DestroyAllWindows()
-
-#     process(frames)
