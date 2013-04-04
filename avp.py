@@ -194,7 +194,9 @@ def process_video(**kwargs):
     opts.update(kwargs)
     conv_f =  os.path.join(WORKFOLDER, folders_result)
     opts["outfile"] = "{0}/{1}".format(conv_f, os.path.basename(opts["inputfile"]))
-    opts["startoffset"] = "{:02d}:{:02d}:{:02d}".format(opts["startoffset"] / 3600, opts["startoffset"] / 60, opts["startoffset"])
+    opts["startoffset"] = "{h:02d}:{m:02d}:{s:02d}".format(h = opts["startoffset"] / 3600,
+                                                           m = opts["startoffset"] / 60, 
+                                                           s = opts["startoffset"])
     if opts["offsetx"] < 0:
         opts["offsetx"] = opts["width"] - (-opts["offsetx"] % opts["width"])
     if opts["offsety"] < 0:
