@@ -265,7 +265,7 @@ if __name__ == '__main__':
 
     prepare_folders()
 
-    for video_file in glob.glob("{}/*.*".format(folders_video)):
+    for video_file in glob.glob("{folder}/*.*".format(folder=folders_video)):
         logging.info("Processing started", extra={"video": video_file})
 
         coords = find_logo(video_file, MAX_CONTOUR_SCORE, FRAME_ADD_WEIGHT, MORPH_RADIOUS, TRESHOLD)
