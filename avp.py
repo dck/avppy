@@ -34,8 +34,9 @@ convertCommand1 = "avconv -i {inputfile} -y -strict experimental  -b {bitrate} -
 convertCommand2 = "avconv -i {outfile} -y -strict experimental -s {width}:{height} -b {bitrate}   -c:v libx264  -c:a libmp3lame -vf \"drawtext=fontfile={pathtofont}:text='{logotext}':fontcolor={fontcolor}@1.0:fontsize={fontsize}:x={offsetx}:y={offsety}\" {outfile}.avi"
 
 # thumbnail options
-thumbnails_width  = 3
-thumbnails_height = 3
+thumbnail_width_count  = 3
+thumbnail_height_count = 3
+thumbail_width = 1000
 
 
 # custom options
@@ -244,8 +245,8 @@ def make_thumbnails(video_file):
     hh, mm, ss = map(float, duration.split(":"))
     total = (hh*60 + mm)*60 + ss
 
-    width = thumbnails_width
-    height = thumbnails_height
+    width = thumbnail_width_count
+    height = thumbnail_height_count
 
     screen_folder = os.path.abspath(os.path.dirname(sys.argv[0]))
 
@@ -264,6 +265,8 @@ def make_thumbnails(video_file):
             full.paste(img, (x*w, y*h))
 
     thum_f =  os.path.join(WORKFOLDER, folders_thumbnail)
+    w, h = full.size
+    full.thumbnail((thumbail_width, int(float(thumbail_width)/w*h)), Image.ANTIALIAS)
     full.save(os.path.join(thum_f, os.path.basename(video_file) + ".png"))
 
     for i in glob.glob("{dir}/{file}*.png".format(dir = screen_folder, file = (os.path.basename(video_file)))):
