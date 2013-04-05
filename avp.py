@@ -30,6 +30,8 @@ convertOptions = {
 }
 convertCommand = "ffmpeg -i {inputfile} -y -strict experimental -s {width}:{height} -b {bitrate} -ss {startoffset} -vcodec libx264 -acodec copy -vf \"drawtext=fontfile={pathtofont}:text='{logotext}':fontcolor={fontcolor}@1.0:fontsize={fontsize}:x={offsetx}:y={offsety}, delogo=x={x}:y={y}:w={w}:h={h}:band=10:show=0\" {outfile}"
 
+convertCommand1 = "avconv -i {inputfile} -y -strict experimental  -b {bitrate} -ss {startoffset} -c:v libx264  -c:a libmp3lame -vf \"delogo=x={x}:y={y}:w={w}:h={h}:band=10:show=0\" {outfile}"
+convertCommand2 = "avconv -i {outfile} -y -strict experimental -s {width}:{height} -b {bitrate}   -c:v libx264  -c:a libmp3lame -vf \"drawtext=fontfile={pathtofont}:text='{logotext}':fontcolor={fontcolor}@1.0:fontsize={fontsize}:x={offsetx}:y={offsety}\" {outfile}.avi"
 
 # thumbnail options
 thumbnails_width  = 3
@@ -192,7 +194,7 @@ def usage():
 def process_video(**kwargs):
     opts = convertOptions
     opts.update(kwargs)
-    conv_f =  os.path.join(WORKFOLDER, folders_result)
+    conv_f =  os.path.join(WORKFOLDER, folders_old)
     opts["outfile"] = "{0}/{1}".format(conv_f, os.path.basename(opts["inputfile"]))
     opts["startoffset"] = "{h:02d}:{m:02d}:{s:02d}".format(h = opts["startoffset"] / 3600,
                                                            m = opts["startoffset"] / 60, 
@@ -203,7 +205,23 @@ def process_video(**kwargs):
         opts["offsety"] = opts["height"] - (-opts["offsety"] % opts["height"])
 
     logging.info("Processing video", extra={"video": opts["inputfile"]})
-    command = convertCommand.format(**opts)
+    command = convertCommand1.format(**opts)
+    logging.info("Produced command: {c}".format(c=command), extra={"video": opts["inputfile"]})
+
+    sub = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    (stdout, stderr) = sub.communicate()
+    logging.info(stdout, extra={"video": opts["inputfile"]})
+
+    if  sub.returncode !=0:
+        sys.stderr.write("Error occured, see in {f}\n".format(f=log_file))
+        return False
+    '''
+    conv_f =  os.path.join(WORKFOLDER, folders_result)
+    opts["outfile"] = "{0}/{1}".format(conv_f, os.path.basename(opts["inputfile"]))
+    opts["inputfile"] = "{0}/{1}".format(folders_old, os.path.basename(opts["inputfile"]))
+
+    logging.info("Processing video", extra={"video": opts["inputfile"]})
+    command = convertCommand2.format(**opts)
     logging.info("Produced command: {c}".format(c=command), extra={"video": opts["inputfile"]})
 
     sub = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -215,6 +233,7 @@ def process_video(**kwargs):
         return False
 
     return True
+    '''
 
 def make_thumbnails(video_file):
     logging.info("Making thumbnails", extra={"video": video_file})
